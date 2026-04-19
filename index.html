@@ -514,7 +514,51 @@
     100% { transform: scale(0.3) rotate(40deg) translate(var(--tx), var(--ty)); opacity: 0; }
   }
 
-  .empty-log {
+  .goal-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .goal-action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+    padding: 4px;
+    border-radius: 8px;
+    transition: background 0.15s;
+    line-height: 1;
+  }
+  .goal-action-btn:hover { background: rgba(0,0,0,0.06); }
+
+  .goal-edit-input {
+    flex: 1;
+    border: 2px solid var(--carrot);
+    border-radius: 10px;
+    padding: 6px 10px;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    min-width: 0;
+  }
+
+  .goal-edit-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 6px 10px;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .goal-edit-btn.save { background: var(--carrot); color: white; }
+  .goal-edit-btn.cancel { background: #eee; color: var(--text-light); }
+
+  .goal-item.editing { flex-wrap: wrap; gap: 6px; }
     font-size: 12px;
     color: #ccc;
     text-align: center;
@@ -680,24 +724,97 @@
     state.goals.forEach(goal => {
       const div = document.createElement('div');
       div.className = 'goal-item' + (goal.completed ? ' completed' : '');
-      div.innerHTML = `
-        <div class="goal-check" onclick="toggleGoal(${goal.id})">
-          ${goal.completed ? '✓' : ''}
-        </div>
-        <div class="goal-info">
-          <div class="goal-name">${escapeHtml(goal.name)}</div>
-          <div class="goal-meta">
-            ${goal.streak >= 1 ? `<span class="goal-streak">🔥 ${goal.streak}日連続！</span>` : '今日挑戦'}
+      div.id = `goal-${goal.id}`;
+
+      if (goal._editing) {
+        // 編集モード
+        div.innerHTML = `
+          <input class="goal-edit-input" id="edit-input-${goal.id}" value="${escapeHtml(goal.name)}" maxlength="30"
+            onkeydown="if(event.key==='Enter') saveGoalEdit(${goal.id}); if(event.key==='Escape') cancelGoalEdit(${goal.id})"/>
+          <button class="goal-edit-btn save" onclick="saveGoalEdit(${goal.id})">保存</button>
+          <button class="goal-edit-btn cancel" onclick="cancelGoalEdit(${goal.id})">✕</button>
+        `;
+        setTimeout(() => {
+          const inp = document.getElementById(`edit-input-${goal.id}`);
+          if (inp) { inp.focus(); inp.select(); }
+        }, 30);
+      } else {
+        // 通常表示
+        div.innerHTML = `
+          <div class="goal-check" onclick="toggleGoal(${goal.id})">
+            ${goal.completed ? '✓' : ''}
           </div>
-        </div>
-        <div class="goal-carrot-badge">🥕×1</div>
-      `;
+          <div class="goal-info">
+            <div class="goal-name">${escapeHtml(goal.name)}</div>
+            <div class="goal-meta">
+              ${goal.streak >= 1 ? `<span class="goal-streak">🔥 ${goal.streak}日連続！</span>` : '今日挑戦'}
+            </div>
+          </div>
+          <div class="goal-carrot-badge">🥕×1</div>
+          <div class="goal-actions">
+            <button class="goal-action-btn edit-btn" onclick="startGoalEdit(${goal.id})" title="編集">✏️</button>
+            <button class="goal-action-btn delete-btn" id="del-${goal.id}" onclick="deleteGoal(${goal.id})" title="削除">🗑️</button>
+          </div>
+        `;
+      }
       list.appendChild(div);
     });
 
-    // 空の場合
     if (state.goals.length === 0) {
       list.innerHTML = '<div style="text-align:center;color:#ccc;font-size:13px;padding:20px;">目標を追加してみよう！</div>';
+    }
+  }
+
+  function startGoalEdit(id) {
+    const goal = state.goals.find(g => g.id === id);
+    if (!goal) return;
+    // 他の編集中を閉じる
+    state.goals.forEach(g => delete g._editing);
+    goal._editing = true;
+    renderGoals();
+  }
+
+  function saveGoalEdit(id) {
+    const goal = state.goals.find(g => g.id === id);
+    if (!goal) return;
+    const inp = document.getElementById(`edit-input-${id}`);
+    const newName = inp ? inp.value.trim() : '';
+    if (!newName) return;
+    const oldName = goal.name;
+    goal.name = newName;
+    delete goal._editing;
+    addStory(`目標「${oldName}」を「${newName}」に変更した。`);
+    saveState();
+    render();
+    showToast('目標を変更しました！');
+  }
+
+  function cancelGoalEdit(id) {
+    const goal = state.goals.find(g => g.id === id);
+    if (!goal) return;
+    delete goal._editing;
+    renderGoals();
+  }
+
+  function deleteGoal(id) {
+    const btn = document.getElementById(`del-${id}`);
+    if (btn && btn.dataset.confirm === '1') {
+      const goal = state.goals.find(g => g.id === id);
+      if (!goal) return;
+      // 完了済みなら人参を戻す
+      if (goal.completed && state.pendingCarrots > 0) state.pendingCarrots--;
+      addStory(`目標「${goal.name}」を削除した。`);
+      state.goals = state.goals.filter(g => g.id !== id);
+      saveState();
+      render();
+      showToast('目標を削除しました');
+    } else if (btn) {
+      btn.textContent = '本当に削除？';
+      btn.dataset.confirm = '1';
+      btn.style.fontSize = '10px';
+      setTimeout(() => {
+        if (btn) { btn.textContent = '🗑️'; btn.style.fontSize = ''; delete btn.dataset.confirm; }
+      }, 3000);
     }
   }
 
