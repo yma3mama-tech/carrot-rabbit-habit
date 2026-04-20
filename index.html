@@ -559,11 +559,304 @@
   .goal-edit-btn.cancel { background: #eee; color: var(--text-light); }
 
   .goal-item.editing { flex-wrap: wrap; gap: 6px; }
+
+  .empty-log {
     font-size: 12px;
     color: #ccc;
     text-align: center;
     padding: 8px;
   }
+
+  /* コレクションボタン */
+  .collection-btn {
+    background: linear-gradient(135deg, var(--lavender), #d4b8f0);
+    border: none;
+    border-radius: 20px;
+    padding: 10px 18px;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: #6a3d9a;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 3px 10px rgba(160,100,220,0.3);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 12px auto;
+    width: fit-content;
+  }
+  .collection-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 14px rgba(160,100,220,0.4); }
+  .collection-badge {
+    background: var(--carrot);
+    color: white;
+    border-radius: 10px;
+    padding: 1px 7px;
+    font-size: 11px;
+  }
+
+  /* モーダル */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(61,43,31,0.5);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .modal-sheet {
+    background: var(--cream);
+    border-radius: 28px 28px 0 0;
+    padding: 20px 16px 36px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 85vh;
+    overflow-y: auto;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .modal-overlay.open .modal-sheet {
+    transform: translateY(0);
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .modal-title {
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--text);
+  }
+  .modal-close {
+    background: #f0e8e0;
+    border: none;
+    border-radius: 50%;
+    width: 32px; height: 32px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .modal-close:hover { background: #e0d0c8; }
+
+  /* コレクション統計 */
+  .collection-stats {
+    background: white;
+    border-radius: 16px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    box-shadow: 0 2px 8px var(--shadow);
+  }
+  .stat-item {
+    text-align: center;
+  }
+  .stat-num {
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--carrot-dark);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 10px;
+    color: var(--text-light);
+    margin-top: 2px;
+  }
+
+  /* アイテムグリッド */
+  .item-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .item-card {
+    background: white;
+    border-radius: 18px;
+    padding: 14px 8px 10px;
+    text-align: center;
+    box-shadow: 0 2px 10px var(--shadow);
+    border: 2px solid transparent;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .item-card.owned {
+    border-color: var(--gold);
+    background: linear-gradient(135deg, #fffbe6, white);
+  }
+  .item-card.owned:active { transform: scale(0.97); }
+  .item-card.locked {
+    background: #f8f5f2;
+    opacity: 0.7;
+  }
+  .item-card.new-glow {
+    animation: newGlow 2s ease infinite;
+  }
+  @keyframes newGlow {
+    0%,100% { box-shadow: 0 2px 10px var(--shadow); }
+    50% { box-shadow: 0 0 20px rgba(255,215,0,0.6); }
+  }
+  .item-emoji {
+    font-size: 32px;
+    line-height: 1;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .item-card.locked .item-emoji {
+    filter: grayscale(1) opacity(0.3);
+    font-size: 28px;
+  }
+  .item-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .item-card.locked .item-name {
+    color: #bbb;
+  }
+  .item-rarity {
+    font-size: 9px;
+    margin-top: 3px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .rarity-common { color: #888; }
+  .rarity-rare { color: #5b8dee; }
+  .rarity-epic { color: #9c4de8; }
+  .rarity-legendary { color: #e8a500; }
+
+  .item-card.locked .item-hint {
+    font-size: 9px;
+    color: #ccc;
+    margin-top: 3px;
+    line-height: 1.3;
+  }
+  .item-new-badge {
+    position: absolute;
+    top: 6px; right: 6px;
+    background: var(--carrot);
+    color: white;
+    font-size: 8px;
+    font-weight: 900;
+    border-radius: 6px;
+    padding: 1px 5px;
+  }
+
+  /* セクション見出し */
+  .collection-section-title {
+    font-size: 12px;
+    font-weight: 900;
+    color: var(--text-light);
+    letter-spacing: 0.08em;
+    margin: 12px 0 8px 4px;
+  }
+
+  /* ストリーク報酬バナー */
+  .streak-reward-banner {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.5);
+    background: white;
+    border-radius: 24px;
+    padding: 24px 32px;
+    text-align: center;
+    z-index: 2000;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    max-width: 280px;
+    width: 80vw;
+  }
+  .streak-reward-banner.show {
+    opacity: 1;
+    pointer-events: all;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  .streak-reward-banner .big-emoji { font-size: 52px; margin-bottom: 8px; display: block; }
+  .streak-reward-banner .reward-title { font-size: 18px; font-weight: 900; color: var(--carrot-dark); margin-bottom: 4px; }
+  .streak-reward-banner .reward-desc { font-size: 13px; color: var(--text-light); margin-bottom: 16px; }
+  .streak-reward-banner .reward-ok {
+    background: linear-gradient(135deg, var(--carrot), var(--carrot-dark));
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 10px 28px;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* アイテムゲット演出 */
+  .item-get-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.5);
+    background: white;
+    border-radius: 24px;
+    padding: 24px 32px;
+    text-align: center;
+    z-index: 2000;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    max-width: 280px;
+    width: 80vw;
+  }
+  .item-get-overlay.show {
+    opacity: 1;
+    pointer-events: all;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  .item-get-overlay .big-emoji { font-size: 56px; margin-bottom: 8px; display: block; animation: itemPop 0.5s ease 0.3s both; }
+  @keyframes itemPop {
+    0% { transform: scale(0) rotate(-20deg); }
+    70% { transform: scale(1.2) rotate(5deg); }
+    100% { transform: scale(1) rotate(0); }
+  }
+  .item-get-overlay .get-label { font-size: 11px; font-weight: 700; color: var(--text-light); letter-spacing:0.1em; margin-bottom: 4px; }
+  .item-get-overlay .get-name { font-size: 18px; font-weight: 900; color: var(--text); margin-bottom: 4px; }
+  .item-get-overlay .get-desc { font-size: 12px; color: var(--text-light); margin-bottom: 16px; }
+  .item-get-overlay .get-ok {
+    background: linear-gradient(135deg, #9c4de8, #7b2fd6);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 10px 28px;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .modal-dim {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 1999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .modal-dim.show { opacity: 1; pointer-events: all; }
 </style>
 </head>
 <body>
@@ -622,9 +915,58 @@
     <div class="empty-log">ここにうさぎのストーリーが記録されます</div>
   </div>
 
+  <!-- コレクションボタン -->
+  <button class="collection-btn" onclick="openCollection()">
+    ✨ コレクションルーム
+    <span class="collection-badge" id="collectionBadge">0</span>
+  </button>
+
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- コレクションモーダル -->
+<div class="modal-overlay" id="collectionModal" onclick="closeCollectionOutside(event)">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">✨ コレクションルーム</div>
+      <button class="modal-close" onclick="closeCollection()">✕</button>
+    </div>
+    <div class="collection-stats">
+      <div class="stat-item">
+        <div class="stat-num" id="ownedCount">0</div>
+        <div class="stat-label">ゲット済み</div>
+      </div>
+      <div class="stat-item" style="border-left:1px solid #f0e8e0;padding-left:16px;">
+        <div class="stat-num" id="totalCount">0</div>
+        <div class="stat-label">全アイテム</div>
+      </div>
+      <div class="stat-item" style="border-left:1px solid #f0e8e0;padding-left:16px;">
+        <div class="stat-num" id="completeRate">0%</div>
+        <div class="stat-label">コンプリート率</div>
+      </div>
+    </div>
+    <div id="collectionContent"></div>
+  </div>
+</div>
+
+<!-- アイテムゲット演出 -->
+<div class="modal-dim" id="modalDim"></div>
+<div class="item-get-overlay" id="itemGetOverlay">
+  <span class="big-emoji" id="itemGetEmoji">🎁</span>
+  <div class="get-label">✨ NEW ITEM GET ✨</div>
+  <div class="get-name" id="itemGetName"></div>
+  <div class="get-desc" id="itemGetDesc"></div>
+  <button class="get-ok" onclick="closeItemGet()">やった！</button>
+</div>
+
+<!-- ストリーク報酬バナー -->
+<div class="streak-reward-banner" id="streakBanner">
+  <span class="big-emoji" id="streakBannerEmoji">🔥</span>
+  <div class="reward-title" id="streakBannerTitle"></div>
+  <div class="reward-desc" id="streakBannerDesc"></div>
+  <button class="reward-ok" onclick="closeStreakBanner()">うれしい！🥕</button>
+</div>
 
 <script>
   // --- State ---
@@ -640,7 +982,35 @@
     storyLog: [],
     weekData: {},
     nextId: 4,
+    ownedItems: [],      // 取得済みアイテムID配列
+    newItems: [],        // 未確認の新アイテムID配列
+    loginStreak: 0,      // ログイン連続日数
+    lastLoginDate: null,
   };
+
+  // --- アイテム定義 ---
+  const ITEMS = [
+    // ストリーク報酬
+    { id: 'streak3',    emoji: '🌟', name: '輝く星',     desc: '3日連続達成で獲得！', rarity: 'rare',      hint: '3日連続達成', category: 'streak' },
+    { id: 'streak7',    emoji: '👑', name: '黄金の王冠', desc: '7日連続達成で獲得！', rarity: 'epic',      hint: '7日連続達成', category: 'streak' },
+    { id: 'streak14',   emoji: '🏆', name: '伝説のカップ', desc: '14日連続達成で獲得！', rarity: 'legendary', hint: '14日連続達成', category: 'streak' },
+    { id: 'streak30',   emoji: '🌈', name: '虹のかけら',  desc: '30日連続達成で獲得！', rarity: 'legendary', hint: '30日連続達成', category: 'streak' },
+    // ランダムドロップ（レア）
+    { id: 'drop_strawberry', emoji: '🍓', name: 'あまいイチゴ', desc: 'うさぎが大喜び！', rarity: 'rare',      hint: '目標達成でまれにドロップ', category: 'drop' },
+    { id: 'drop_diamond',    emoji: '💎', name: 'ダイヤモンド', desc: 'きらきら輝く！', rarity: 'epic',      hint: '人参をあげるときにまれにドロップ', category: 'drop' },
+    { id: 'drop_moon',       emoji: '🌙', name: '月のかけら',   desc: '夜空に輝く不思議な石', rarity: 'legendary', hint: 'どこかでひそかに落ちてくる…', category: 'drop' },
+    { id: 'drop_clover',     emoji: '🍀', name: '四つ葉のクローバー', desc: '幸運をはこぶクローバー', rarity: 'rare', hint: 'うさぎをなでるときにまれにドロップ', category: 'drop' },
+    { id: 'drop_gem',        emoji: '💍', name: 'ルビーリング',  desc: '真っ赤な宝石が輝く', rarity: 'epic',  hint: '5日以上のストリークでドロップ率UP', category: 'drop' },
+    { id: 'drop_comet',      emoji: '☄️', name: 'すいせい',     desc: 'まばたきする間に通り過ぎた！', rarity: 'legendary', hint: '伝説級のレアアイテム', category: 'drop' },
+    // マイルストーン（人参累計）
+    { id: 'mile10',   emoji: '🎀', name: 'ピンクリボン',  desc: '人参10本！最初の記念品', rarity: 'common',    hint: '人参を10本あげると獲得', category: 'milestone' },
+    { id: 'mile30',   emoji: '🌸', name: 'さくらの花',    desc: '人参30本達成！', rarity: 'rare',      hint: '人参を30本あげると獲得', category: 'milestone' },
+    { id: 'mile100',  emoji: '🎉', name: '大パーティ！',  desc: '人参100本！すごい！', rarity: 'epic',      hint: '人参を100本あげると獲得', category: 'milestone' },
+    { id: 'mile300',  emoji: '🌠', name: '流れ星',        desc: '人参300本の奇跡', rarity: 'legendary', hint: '人参を300本あげると獲得', category: 'milestone' },
+  ];
+
+  const RARITY_LABEL = { common: 'COMMON', rare: 'RARE', epic: 'EPIC', legendary: 'LEGENDARY' };
+  const CATEGORY_LABEL = { streak: '🔥 ストリーク報酬', drop: '🎲 ランダムドロップ', milestone: '🥕 マイルストーン' };
 
   const RABBIT_MESSAGES = {
     idle: [
@@ -695,6 +1065,9 @@
       }
     } catch (e) {}
     state.lastDate = getToday();
+    // 新フィールドの初期化
+    if (!state.ownedItems) state.ownedItems = [];
+    if (!state.newItems) state.newItems = [];
   }
 
   function saveState() {
@@ -717,6 +1090,7 @@
     renderCarrots();
     renderWeek();
     renderStoryLog();
+    renderCollectionBadge();
   }
 
   function renderGoals() {
@@ -909,6 +1283,20 @@
       addStory(`「${goal.name}」を達成！人参1本ゲット！🥕`);
       showToast('目標達成！🥕人参1本ゲット！');
 
+      // ストリーク報酬チェック（その目標の最大ストリーク）
+      checkStreakReward(goal.streak);
+
+      // ランダムドロップ（10%）
+      if (Math.random() < 0.10) {
+        const pool = ITEMS.filter(i => i.category === 'drop' && !state.ownedItems.includes(i.id));
+        if (pool.length > 0) {
+          // ストリーク5以上ならgem/comet重み付け
+          const boosted = goal.streak >= 5 ? pool : pool.filter(i => i.id !== 'drop_gem' && i.id !== 'drop_comet');
+          const chosen = boosted.length > 0 ? pickRandom(boosted) : pickRandom(pool);
+          setTimeout(() => giveItem(chosen), 1200);
+        }
+      }
+
     } else {
       // 未完了に戻す
       goal.completed = false;
@@ -952,6 +1340,17 @@
     addStory(storyFn(state.totalCarrotsGiven));
     addStory(`うさぎに${count}本の人参をあげた！（合計${state.totalCarrotsGiven}本）`);
 
+    // マイルストーンチェック
+    checkMilestone(state.totalCarrotsGiven);
+
+    // ランダムドロップ（5%）
+    if (Math.random() < 0.05) {
+      const pool = ITEMS.filter(i => i.category === 'drop' && (i.id === 'drop_diamond' || i.id === 'drop_moon') && !state.ownedItems.includes(i.id));
+      if (pool.length > 0) {
+        setTimeout(() => giveItem(pickRandom(pool)), 1500);
+      }
+    }
+
     saveState();
     render();
     showToast(`🐰 うさぎに${count}本の人参をあげた！`);
@@ -962,6 +1361,14 @@
     setRabbitMessage(msg, true);
     animateRabbit('happy');
     spawnEffects(['💕','🌸'], 3);
+
+    // クローバードロップ（7%）
+    if (Math.random() < 0.07) {
+      const item = ITEMS.find(i => i.id === 'drop_clover');
+      if (item && !state.ownedItems.includes(item.id)) {
+        setTimeout(() => giveItem(item), 800);
+      }
+    }
   }
 
   function clearStory() {
@@ -1110,6 +1517,155 @@
 
   function escapeHtml(str) {
     return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // --- ストリーク報酬 ---
+  const STREAK_REWARDS = [
+    { days: 3,  itemId: 'streak3',  bonus: 1, emoji: '🌟', title: '3日連続達成！', desc: '輝く星をゲット＋人参ボーナス1本！' },
+    { days: 7,  itemId: 'streak7',  bonus: 2, emoji: '👑', title: '7日連続達成！！', desc: '黄金の王冠をゲット＋人参ボーナス2本！！' },
+    { days: 14, itemId: 'streak14', bonus: 3, emoji: '🏆', title: '14日連続達成！！！', desc: '伝説のカップをゲット＋人参ボーナス3本！！！' },
+    { days: 30, itemId: 'streak30', bonus: 5, emoji: '🌈', title: '30日連続達成！！！！', desc: '虹のかけらをゲット＋人参ボーナス5本！！！！' },
+  ];
+
+  function checkStreakReward(streak) {
+    for (const reward of STREAK_REWARDS) {
+      if (streak === reward.days && !state.ownedItems.includes(reward.itemId)) {
+        // ボーナス人参
+        state.pendingCarrots += reward.bonus;
+        // アイテム付与
+        giveItem(ITEMS.find(i => i.id === reward.itemId), false);
+        // バナー表示
+        setTimeout(() => showStreakBanner(reward), 600);
+        addStory(`🔥 ${reward.days}日連続達成！特別ボーナス＋人参${reward.bonus}本！`);
+        break;
+      }
+    }
+  }
+
+  function showStreakBanner(reward) {
+    document.getElementById('streakBannerEmoji').textContent = reward.emoji;
+    document.getElementById('streakBannerTitle').textContent = reward.title;
+    document.getElementById('streakBannerDesc').textContent = reward.desc;
+    document.getElementById('streakBanner').classList.add('show');
+    document.getElementById('modalDim').classList.add('show');
+    spawnEffects(['🎉','🌟','✨','🥕'], 12);
+  }
+
+  function closeStreakBanner() {
+    document.getElementById('streakBanner').classList.remove('show');
+    document.getElementById('modalDim').classList.remove('show');
+    saveState();
+    render();
+  }
+
+  // --- マイルストーン ---
+  const MILESTONE_REWARDS = [
+    { count: 10,  itemId: 'mile10' },
+    { count: 30,  itemId: 'mile30' },
+    { count: 100, itemId: 'mile100' },
+    { count: 300, itemId: 'mile300' },
+  ];
+
+  function checkMilestone(total) {
+    for (const m of MILESTONE_REWARDS) {
+      if (total >= m.count && !state.ownedItems.includes(m.itemId)) {
+        const item = ITEMS.find(i => i.id === m.itemId);
+        if (item) {
+          setTimeout(() => giveItem(item), 1800);
+          addStory(`🎉 人参${m.count}本達成！マイルストーンアイテムゲット！`);
+        }
+      }
+    }
+  }
+
+  // --- アイテム付与・表示 ---
+  function giveItem(item, showOverlay = true) {
+    if (!item) return;
+    if (!state.ownedItems.includes(item.id)) {
+      state.ownedItems.push(item.id);
+      state.newItems.push(item.id);
+      addStory(`✨ 新アイテム「${item.name}」${item.emoji}をゲット！`);
+      saveState();
+      renderCollectionBadge();
+      if (showOverlay) {
+        showItemGet(item);
+      }
+    }
+  }
+
+  function showItemGet(item) {
+    document.getElementById('itemGetEmoji').textContent = item.emoji;
+    document.getElementById('itemGetName').textContent = item.name;
+    document.getElementById('itemGetDesc').textContent = item.desc;
+    document.getElementById('itemGetOverlay').classList.add('show');
+    document.getElementById('modalDim').classList.add('show');
+    spawnEffects(['✨','💫','🌟','⭐'], 10);
+  }
+
+  function closeItemGet() {
+    document.getElementById('itemGetOverlay').classList.remove('show');
+    document.getElementById('modalDim').classList.remove('show');
+  }
+
+  // --- コレクションルーム ---
+  function renderCollectionBadge() {
+    const badge = document.getElementById('collectionBadge');
+    const owned = state.ownedItems ? state.ownedItems.length : 0;
+    badge.textContent = `${owned}/${ITEMS.length}`;
+    if (state.newItems && state.newItems.length > 0) {
+      badge.style.background = 'var(--carrot)';
+      badge.textContent = `NEW!`;
+    } else {
+      badge.style.background = '#9c4de8';
+    }
+  }
+
+  function openCollection() {
+    // 新着クリア
+    state.newItems = [];
+    saveState();
+    renderCollectionBadge();
+
+    // 統計更新
+    const owned = state.ownedItems ? state.ownedItems.length : 0;
+    document.getElementById('ownedCount').textContent = owned;
+    document.getElementById('totalCount').textContent = ITEMS.length;
+    document.getElementById('completeRate').textContent = Math.round(owned / ITEMS.length * 100) + '%';
+
+    // コンテンツ生成
+    const content = document.getElementById('collectionContent');
+    const categories = ['streak', 'drop', 'milestone'];
+    content.innerHTML = categories.map(cat => {
+      const catItems = ITEMS.filter(i => i.category === cat);
+      return `
+        <div class="collection-section-title">${CATEGORY_LABEL[cat]}</div>
+        <div class="item-grid">
+          ${catItems.map(item => {
+            const isOwned = state.ownedItems && state.ownedItems.includes(item.id);
+            const isNew = state.newItems && state.newItems.includes(item.id);
+            return `
+              <div class="item-card ${isOwned ? 'owned' : 'locked'}${isNew ? ' new-glow' : ''}">
+                ${isNew ? '<span class="item-new-badge">NEW</span>' : ''}
+                <span class="item-emoji">${isOwned ? item.emoji : '❓'}</span>
+                <div class="item-name">${isOwned ? item.name : '？？？'}</div>
+                <div class="item-rarity rarity-${item.rarity}">${RARITY_LABEL[item.rarity]}</div>
+                ${!isOwned ? `<div class="item-hint">${item.hint}</div>` : ''}
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }).join('');
+
+    document.getElementById('collectionModal').classList.add('open');
+  }
+
+  function closeCollection() {
+    document.getElementById('collectionModal').classList.remove('open');
+  }
+
+  function closeCollectionOutside(e) {
+    if (e.target === document.getElementById('collectionModal')) closeCollection();
   }
 
   // --- Init ---
