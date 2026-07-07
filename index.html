@@ -766,6 +766,32 @@
     margin: 12px 0 8px 4px;
   }
 
+  /* お休みチケット */
+  .ticket-bar {
+    background: linear-gradient(135deg, #fff8ec, #fffdf8);
+    border: 1.5px dashed #e8c88a;
+    border-radius: 14px;
+    padding: 10px 14px;
+    margin: 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .ticket-bar .ticket-icon { font-size: 26px; }
+  .ticket-bar .ticket-info { display: flex; flex-direction: column; gap: 2px; }
+  .ticket-bar .ticket-info strong { font-size: 13px; color: #b8860b; }
+  .ticket-bar .ticket-desc { font-size: 10.5px; color: var(--text-light); line-height: 1.5; }
+  .total-stats {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    font-size: 11px;
+    color: var(--text-light);
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed #f0e8e0;
+  }
+
   /* ストリーク報酬バナー */
   .streak-reward-banner {
     position: fixed;
@@ -889,10 +915,23 @@
     </button>
   </div>
 
+  <!-- お休みチケット -->
+  <div class="ticket-bar">
+    <span class="ticket-icon">🎫</span>
+    <div class="ticket-info">
+      <strong id="ticketCountText">お休みチケット ×1</strong>
+      <span class="ticket-desc">1日お休みしてもストリークを自動で守るよ（週1枚もらえる・最大2枚）</span>
+    </div>
+  </div>
+
   <!-- 週間カレンダー -->
   <div class="week-calendar">
     <div class="section-title" style="margin:0 0 10px; font-size:11px;">今週の記録</div>
     <div class="week-row" id="weekRow"></div>
+    <div class="total-stats">
+      <span id="totalGivenText">🥕 累計 0本</span>
+      <span id="comebackText">💐 おかえり 0回</span>
+    </div>
   </div>
 
   <!-- 今日の目標 -->
@@ -986,6 +1025,10 @@
     newItems: [],        // 未確認の新アイテムID配列
     loginStreak: 0,      // ログイン連続日数
     lastLoginDate: null,
+    restTickets: 1,      // お休みチケット（週1枚配布・最大2枚）
+    ticketWeekKey: null, // チケット配布済みの週
+    comebackCount: 0,    // おかえり（復帰）回数
+    lastComebackDate: null,
   };
 
   // --- アイテム定義 ---
@@ -1007,10 +1050,13 @@
     { id: 'mile30',   emoji: '🌸', name: 'さくらの花',    desc: '人参30本達成！', rarity: 'rare',      hint: '人参を30本あげると獲得', category: 'milestone' },
     { id: 'mile100',  emoji: '🎉', name: '大パーティ！',  desc: '人参100本！すごい！', rarity: 'epic',      hint: '人参を100本あげると獲得', category: 'milestone' },
     { id: 'mile300',  emoji: '🌠', name: '流れ星',        desc: '人参300本の奇跡', rarity: 'legendary', hint: '人参を300本あげると獲得', category: 'milestone' },
+    // おかえり（復帰）
+    { id: 'comeback1', emoji: '🌷', name: 'おかえりの花',   desc: 'お休みのあと、また戻ってきた記念', rarity: 'rare', hint: 'お休みのあとに再開すると獲得', category: 'comeback' },
+    { id: 'comeback3', emoji: '💐', name: 'おかえりの花束', desc: '3回の復帰。続ける力より、戻る力！', rarity: 'epic', hint: '3回復帰すると獲得', category: 'comeback' },
   ];
 
   const RARITY_LABEL = { common: 'COMMON', rare: 'RARE', epic: 'EPIC', legendary: 'LEGENDARY' };
-  const CATEGORY_LABEL = { streak: '🔥 ストリーク報酬', drop: '🎲 ランダムドロップ', milestone: '🥕 マイルストーン' };
+  const CATEGORY_LABEL = { streak: '🔥 ストリーク報酬', drop: '🎲 ランダムドロップ', milestone: '🥕 マイルストーン', comeback: '💐 おかえり' };
 
   const RABBIT_MESSAGES = {
     idle: [
@@ -1031,6 +1077,15 @@
       'ありがとう！大好き！💕',
       'うれしすぎてぴょんぴょんしちゃう！🐰',
       'やったー！がんばったかいがあったね！🌟',
+    ],
+    comeback: [
+      'おかえりなさい！会いたかったよ！🐰💕',
+      '戻ってきてくれてうれしい！それが一番すごいこと！🌷',
+      'お休みも大事！また一緒にがんばろう！🌟',
+    ],
+    ticket: [
+      'お休みチケットでストリークを守ったよ！🎫✨',
+      'たまには休んでいいんだよ。ちゃんと続いてるからね！🔥',
     ],
     completed: [
       'えらいね！人参をもらう権利ゲット！🥕',
@@ -1057,7 +1112,7 @@
         // 日付チェック：新しい日なら目標をリセット
         const today = getToday();
         if (parsed.lastDate !== today) {
-          parsed.goals = parsed.goals.map(g => ({ ...g, completed: false }));
+          parsed.goals = parsed.goals.map(g => ({ ...g, completed: false, undo: null }));
           parsed.pendingCarrots = 0;
           parsed.lastDate = today;
         }
@@ -1068,6 +1123,21 @@
     // 新フィールドの初期化
     if (!state.ownedItems) state.ownedItems = [];
     if (!state.newItems) state.newItems = [];
+    if (state.restTickets === undefined || state.restTickets === null) state.restTickets = 1;
+    if (!state.comebackCount) state.comebackCount = 0;
+    // 週1回のお休みチケット配布（最大2枚）
+    const wk = getWeekKey();
+    if (!state.ticketWeekKey) {
+      state.ticketWeekKey = wk; // 初回は配布なし（初期1枚を保有）
+    } else if (state.ticketWeekKey !== wk) {
+      state.ticketWeekKey = wk;
+      if (state.restTickets < 2) {
+        state.restTickets++;
+        addStory('🎫 今週のお休みチケットをもらった！');
+      }
+    }
+    state.lastLoginDate = getToday();
+    saveState();
   }
 
   function saveState() {
@@ -1205,6 +1275,14 @@
       icons.innerHTML += `<span style="font-size:11px;color:var(--text-light)">+${state.pendingCarrots-8}</span>`;
     }
     btn.disabled = state.pendingCarrots === 0;
+
+    // チケット＆累計表示
+    const tk = document.getElementById('ticketCountText');
+    if (tk) tk.textContent = `お休みチケット ×${state.restTickets}`;
+    const tg = document.getElementById('totalGivenText');
+    if (tg) tg.textContent = `🥕 累計 ${state.totalCarrotsGiven}本`;
+    const cb = document.getElementById('comebackText');
+    if (cb) cb.textContent = `💐 おかえり ${state.comebackCount || 0}回`;
   }
 
   function renderWeek() {
@@ -1258,13 +1336,24 @@
       goal.completed = true;
       state.pendingCarrots++;
 
-      // 連続日数の計算：昨日達成していれば+1、そうでなければ1にリセット
+      // 連続日数の計算（お休みチケット・おかえりボーナス対応）
       const yesterday = getDateStr(-1);
+      goal.undo = { streak: goal.streak || 0, lastCompletedDate: goal.lastCompletedDate, ticketUsed: false };
+      let usedTicket = false;
+      let isComeback = false;
       if (goal.lastCompletedDate === yesterday) {
         goal.streak = (goal.streak || 0) + 1;
       } else if (goal.lastCompletedDate === today) {
         // 同日に再チェック（未完了→完了）→ストリークそのまま
+      } else if (goal.lastCompletedDate && daysBetween(goal.lastCompletedDate, today) === 2
+                 && (goal.streak || 0) >= 2 && state.restTickets > 0) {
+        // 1日だけお休み → チケット自動使用でストリーク継続
+        state.restTickets--;
+        goal.undo.ticketUsed = true;
+        goal.streak = (goal.streak || 0) + 1;
+        usedTicket = true;
       } else {
+        if (goal.lastCompletedDate) isComeback = true; // お休み明けの再開
         goal.streak = 1;
       }
       goal.lastCompletedDate = today;
@@ -1286,6 +1375,35 @@
       // ストリーク報酬チェック（その目標の最大ストリーク）
       checkStreakReward(goal.streak);
 
+      // お休みチケット使用演出
+      if (usedTicket) {
+        setRabbitMessage(pickRandom(RABBIT_MESSAGES.ticket), true);
+        addStory(`🎫 お休みチケットで「${goal.name}」のストリークを守った！（🔥${goal.streak}日連続）`);
+        setTimeout(() => showStreakBanner({
+          emoji: '🎫', title: 'お休みチケット発動！',
+          desc: `1日お休みしたけどストリーク継続！🔥${goal.streak}日連続のまま！（チケット残り${state.restTickets}枚）`,
+        }), 600);
+      }
+
+      // おかえりボーナス（1日1回）
+      if (isComeback && state.lastComebackDate !== today) {
+        state.lastComebackDate = today;
+        state.comebackCount = (state.comebackCount || 0) + 1;
+        state.pendingCarrots++; // ボーナス人参
+        setRabbitMessage(pickRandom(RABBIT_MESSAGES.comeback), true);
+        spawnEffects(['🌷','💕','✨'], 5);
+        addStory(`💐 おかえりなさい！再開ボーナスで人参1本ゲット！（復帰${state.comebackCount}回目）`);
+        setTimeout(() => showStreakBanner({
+          emoji: '🌷', title: 'おかえりなさい！',
+          desc: 'また戻ってきてくれた！それが一番すごいこと。ボーナス人参1本！🥕',
+        }), 600);
+        // おかえりアイテム
+        const cbItem = state.comebackCount >= 3 && !state.ownedItems.includes('comeback3')
+          ? ITEMS.find(i => i.id === 'comeback3')
+          : (!state.ownedItems.includes('comeback1') ? ITEMS.find(i => i.id === 'comeback1') : null);
+        if (cbItem) setTimeout(() => giveItem(cbItem), 2400);
+      }
+
       // ランダムドロップ（10%）
       if (Math.random() < 0.10) {
         const pool = ITEMS.filter(i => i.category === 'drop' && !state.ownedItems.includes(i.id));
@@ -1301,14 +1419,34 @@
       // 未完了に戻す
       goal.completed = false;
       if (state.pendingCarrots > 0) state.pendingCarrots--;
-      // 本日のチェックを外す→ streakは今日分を戻す
-      goal.streak = Math.max(0, (goal.streak || 1) - 1);
-      goal.lastCompletedDate = goal.streak > 0 ? getDateStr(-1) : null;
+      // 本日のチェックを外す→ 完了前の状態に復元
+      if (goal.undo) {
+        goal.streak = goal.undo.streak;
+        goal.lastCompletedDate = goal.undo.lastCompletedDate;
+        if (goal.undo.ticketUsed) state.restTickets = Math.min(2, state.restTickets + 1); // チケット返却
+        goal.undo = null;
+      } else {
+        goal.streak = Math.max(0, (goal.streak || 1) - 1);
+        goal.lastCompletedDate = goal.streak > 0 ? getDateStr(-1) : null;
+      }
       addStory(`「${goal.name}」を未達成に戻した。`);
     }
 
     saveState();
     render();
+  }
+
+  function getWeekKey() {
+    const d = new Date();
+    d.setHours(0,0,0,0);
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); // 週の月曜日
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function daysBetween(dateStrA, dateStrB) {
+    const a = new Date(dateStrA + 'T00:00:00');
+    const b = new Date(dateStrB + 'T00:00:00');
+    return Math.round((b - a) / 86400000);
   }
 
   function getDateStr(offset) {
